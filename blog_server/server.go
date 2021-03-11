@@ -9,6 +9,7 @@ import (
 	"os/signal"
 
 	"github.com/AdityaKshettri/blog/blogpb"
+	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
@@ -110,6 +111,38 @@ func (*server) CreateBlog(ctx context.Context, req *blogpb.CreateBlogRequest) (*
 	}
 	resp := &blogpb.CreateBlogResponse{
 		Blog: newBlog,
+	}
+	return resp, nil
+}
+
+func (*server) ReadBlog(ctx context.Context, req *blogpb.ReadBlogRequest) (*blogpb.ReadBlogResponse, error) {
+	fmt.Println("Received ReadBlogRequest!")
+	blogID := req.GetId()
+	id, err := primitive.ObjectIDFromHex(blogID)
+	if err != nil {
+		return nil, status.Errorf(
+			codes.InvalidArgument,
+			fmt.Sprintf("Cannot parse ID: %v", blogID),
+		)
+	}
+	data := &blogItem{}
+	//filter := options.FindOne().SetProjection(bson.M{"_id": id})
+	filter := bson.M{"_id": id}
+	res := collection.FindOne(context.Background(), filter)
+	if err := res.Decode(data); err != nil {
+		return nil, status.Errorf(
+			codes.NotFound,
+			fmt.Sprintf("Cannot find blog with specified ID %v: %v", id, err),
+		)
+	}
+	blog := &blogpb.Blog{
+		Id:       data.ID.Hex(),
+		AuthorId: data.AuthorID,
+		Title:    data.Title,
+		Content:  data.Content,
+	}
+	resp := &blogpb.ReadBlogResponse{
+		Blog: blog,
 	}
 	return resp, nil
 }
