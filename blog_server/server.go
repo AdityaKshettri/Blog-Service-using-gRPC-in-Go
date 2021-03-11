@@ -37,7 +37,7 @@ func main() {
 
 	// Connect to MongoDB
 	ctx := context.TODO()
-	clientOptions := options.Client().ApplyURI("mongodb+srv://root:1234@cluster0-2kdyk.mongodb.net")
+	clientOptions := options.Client().ApplyURI("mongodb+srv://<username>:<password>@cluster0-2kdyk.mongodb.net")
 	client, err := mongo.Connect(ctx, clientOptions)
 	if err != nil {
 		log.Fatal(err)
